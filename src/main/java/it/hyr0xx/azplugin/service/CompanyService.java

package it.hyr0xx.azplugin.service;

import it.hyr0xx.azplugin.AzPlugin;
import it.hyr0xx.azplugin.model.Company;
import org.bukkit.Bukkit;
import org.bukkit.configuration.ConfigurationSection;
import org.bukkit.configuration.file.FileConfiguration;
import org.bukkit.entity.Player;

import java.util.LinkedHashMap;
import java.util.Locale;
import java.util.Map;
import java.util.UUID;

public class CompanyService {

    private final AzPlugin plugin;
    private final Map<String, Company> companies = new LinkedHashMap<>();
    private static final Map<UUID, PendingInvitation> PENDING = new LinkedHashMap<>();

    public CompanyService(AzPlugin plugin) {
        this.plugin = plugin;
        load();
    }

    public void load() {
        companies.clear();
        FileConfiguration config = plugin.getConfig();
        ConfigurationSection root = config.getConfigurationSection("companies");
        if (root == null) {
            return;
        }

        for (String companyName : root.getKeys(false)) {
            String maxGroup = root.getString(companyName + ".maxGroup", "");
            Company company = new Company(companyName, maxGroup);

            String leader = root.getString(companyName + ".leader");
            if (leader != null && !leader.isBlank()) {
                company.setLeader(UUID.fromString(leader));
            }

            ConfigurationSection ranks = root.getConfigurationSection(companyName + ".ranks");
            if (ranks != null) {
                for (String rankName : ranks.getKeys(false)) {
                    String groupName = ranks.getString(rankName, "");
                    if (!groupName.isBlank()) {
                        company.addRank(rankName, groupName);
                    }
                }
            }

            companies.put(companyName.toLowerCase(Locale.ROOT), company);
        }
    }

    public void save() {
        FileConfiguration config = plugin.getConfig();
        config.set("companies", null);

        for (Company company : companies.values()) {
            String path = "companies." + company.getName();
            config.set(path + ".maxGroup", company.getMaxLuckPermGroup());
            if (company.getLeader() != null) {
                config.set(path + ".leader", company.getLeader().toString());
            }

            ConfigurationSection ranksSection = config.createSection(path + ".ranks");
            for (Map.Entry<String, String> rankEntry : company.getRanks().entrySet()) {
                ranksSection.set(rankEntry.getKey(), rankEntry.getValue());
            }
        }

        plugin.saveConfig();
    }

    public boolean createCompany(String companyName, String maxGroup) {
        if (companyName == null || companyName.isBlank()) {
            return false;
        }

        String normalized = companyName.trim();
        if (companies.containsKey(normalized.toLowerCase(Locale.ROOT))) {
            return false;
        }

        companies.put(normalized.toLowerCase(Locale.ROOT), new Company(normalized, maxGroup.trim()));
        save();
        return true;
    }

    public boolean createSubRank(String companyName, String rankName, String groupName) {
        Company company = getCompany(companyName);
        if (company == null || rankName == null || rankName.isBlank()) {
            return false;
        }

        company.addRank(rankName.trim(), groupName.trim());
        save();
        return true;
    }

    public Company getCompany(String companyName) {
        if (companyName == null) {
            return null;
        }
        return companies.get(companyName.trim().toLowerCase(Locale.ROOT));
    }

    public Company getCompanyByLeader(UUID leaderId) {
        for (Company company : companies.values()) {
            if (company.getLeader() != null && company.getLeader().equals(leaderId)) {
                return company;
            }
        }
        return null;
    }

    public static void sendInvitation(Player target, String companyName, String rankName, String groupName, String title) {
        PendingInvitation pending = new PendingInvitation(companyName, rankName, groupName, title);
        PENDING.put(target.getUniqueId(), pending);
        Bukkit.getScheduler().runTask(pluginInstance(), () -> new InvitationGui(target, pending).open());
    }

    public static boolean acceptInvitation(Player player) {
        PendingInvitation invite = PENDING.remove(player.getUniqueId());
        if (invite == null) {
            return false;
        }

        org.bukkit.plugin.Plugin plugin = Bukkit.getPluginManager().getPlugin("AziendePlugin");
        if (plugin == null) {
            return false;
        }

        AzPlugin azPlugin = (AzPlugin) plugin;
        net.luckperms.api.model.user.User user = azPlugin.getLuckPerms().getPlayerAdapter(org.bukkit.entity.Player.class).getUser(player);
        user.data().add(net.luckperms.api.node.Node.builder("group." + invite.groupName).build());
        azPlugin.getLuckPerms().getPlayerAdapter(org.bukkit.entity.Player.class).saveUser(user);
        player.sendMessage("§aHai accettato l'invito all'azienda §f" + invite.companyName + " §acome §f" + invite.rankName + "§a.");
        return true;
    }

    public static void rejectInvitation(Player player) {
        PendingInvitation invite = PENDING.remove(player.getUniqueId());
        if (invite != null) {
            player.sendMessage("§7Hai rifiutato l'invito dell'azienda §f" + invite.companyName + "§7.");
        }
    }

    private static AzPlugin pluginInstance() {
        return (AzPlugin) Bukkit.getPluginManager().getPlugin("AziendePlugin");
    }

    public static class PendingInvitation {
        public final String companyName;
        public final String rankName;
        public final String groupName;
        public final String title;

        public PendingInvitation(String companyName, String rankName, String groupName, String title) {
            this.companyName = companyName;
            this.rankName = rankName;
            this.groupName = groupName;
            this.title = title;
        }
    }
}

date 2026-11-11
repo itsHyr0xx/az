@@ -1,0 +1,51 @@
+package it.hyr0xx.azplugin.model;
+
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+
+public class Company {
+
+    private final String name;
+    private final String maxLuckPermGroup;
+    private UUID leader;
+    private final Map<String, String> ranks = new LinkedHashMap<>();
+
+    public Company(String name, String maxLuckPermGroup) {
+        this.name = name;
+        this.maxLuckPermGroup = maxLuckPermGroup;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getMaxLuckPermGroup() {
+        return maxLuckPermGroup;
+    }
+
+    public UUID getLeader() {
+        return leader;
+    }
+
+    public void setLeader(UUID leader) {
+        this.leader = leader;
+    }
+
+    public void addRank(String displayName, String groupName) {
+        ranks.put(normalizeRank(displayName), groupName);
+    }
+
+    public String getRankGroup(String displayName) {
+        return ranks.get(normalizeRank(displayName));
+    }
+
+    public Map<String, String> getRanks() {
+        return ranks;
+    }
+
+    public String normalizeRank(String displayName) {
+        return displayName == null ? "" : displayName.trim().toLowerCase(Locale.ROOT);
+    }
+}

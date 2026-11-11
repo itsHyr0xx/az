@@ -1,0 +1,97 @@
+package it.hyr0xx.azplugin.listeners;
+
+import it.hyr0xx.azplugin.AzPlugin;
+import it.hyr0xx.azplugin.service.CompanyService;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.Arrays;
+
+public class InvitationGuiListener implements Listener {
+
+    private final AzPlugin plugin;
+
+    public InvitationGuiListener(AzPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    @EventHandler
+    public void onClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+
+        Inventory inventory = event.getInventory();
+        String title = event.getView().getTitle();
+        if (!title.startsWith(ChatColor.DARK_GRAY + "Invito")) {
+            return;
+        }
+
+        event.setCancelled(true);
+        int slot = event.getRawSlot();
+        if (slot == 11) {
+            CompanyService.acceptInvitation(player);
+            player.closeInventory();
+            return;
+        }
+
+        if (slot == 15) {
+            CompanyService.rejectInvitation(player);
+            player.closeInventory();
+        }
+    }
+}
+
+class InvitationGui {
+    private final Player player;
+    private final CompanyService.PendingInvitation invite;
+
+    public InvitationGui(Player player, CompanyService.PendingInvitation invite) {
+        this.player = player;
+        this.invite = invite;
+    }
+
+    public void open() {
+        Inventory inventory = org.bukkit.Bukkit.createInventory(null, 27, ChatColor.DARK_GRAY + "Invito " + invite.companyName);
+
+        ItemStack info = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+        ItemMeta infoMeta = info.getItemMeta();
+        if (infoMeta != null) {
+            infoMeta.setDisplayName(ChatColor.GRAY + "Azienda: " + ChatColor.WHITE + invite.companyName);
+            infoMeta.setLore(Arrays.asList(
+                    ChatColor.GRAY + "Ruolo: " + ChatColor.WHITE + invite.rankName,
+                    "",
+                    ChatColor.GRAY + "Premi Accetta o Rifiuta"
+            ));
+            info.setItemMeta(infoMeta);
+        }
+
+        ItemStack accept = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
+        ItemMeta acceptMeta = accept.getItemMeta();
+        if (acceptMeta != null) {
+            acceptMeta.setDisplayName(ChatColor.GREEN + "Accetta");
+            acceptMeta.setLore(Arrays.asList(ChatColor.GRAY + "Accetta l'offerta di lavoro."));
+            accept.setItemMeta(acceptMeta);
+        }
+
+        ItemStack reject = new ItemStack(Material.RED_STAINED_GLASS_PANE);
+        ItemMeta rejectMeta = reject.getItemMeta();
+        if (rejectMeta != null) {
+            rejectMeta.setDisplayName(ChatColor.RED + "Rifiuta");
+            rejectMeta.setLore(Arrays.asList(ChatColor.GRAY + "Rifiuta l'invito."));
+            reject.setItemMeta(rejectMeta);
+        }
+
+        inventory.setItem(13, info);
+        inventory.setItem(11, accept);
+        inventory.setItem(15, reject);
+        player.openInventory(inventory);
+    }
+}

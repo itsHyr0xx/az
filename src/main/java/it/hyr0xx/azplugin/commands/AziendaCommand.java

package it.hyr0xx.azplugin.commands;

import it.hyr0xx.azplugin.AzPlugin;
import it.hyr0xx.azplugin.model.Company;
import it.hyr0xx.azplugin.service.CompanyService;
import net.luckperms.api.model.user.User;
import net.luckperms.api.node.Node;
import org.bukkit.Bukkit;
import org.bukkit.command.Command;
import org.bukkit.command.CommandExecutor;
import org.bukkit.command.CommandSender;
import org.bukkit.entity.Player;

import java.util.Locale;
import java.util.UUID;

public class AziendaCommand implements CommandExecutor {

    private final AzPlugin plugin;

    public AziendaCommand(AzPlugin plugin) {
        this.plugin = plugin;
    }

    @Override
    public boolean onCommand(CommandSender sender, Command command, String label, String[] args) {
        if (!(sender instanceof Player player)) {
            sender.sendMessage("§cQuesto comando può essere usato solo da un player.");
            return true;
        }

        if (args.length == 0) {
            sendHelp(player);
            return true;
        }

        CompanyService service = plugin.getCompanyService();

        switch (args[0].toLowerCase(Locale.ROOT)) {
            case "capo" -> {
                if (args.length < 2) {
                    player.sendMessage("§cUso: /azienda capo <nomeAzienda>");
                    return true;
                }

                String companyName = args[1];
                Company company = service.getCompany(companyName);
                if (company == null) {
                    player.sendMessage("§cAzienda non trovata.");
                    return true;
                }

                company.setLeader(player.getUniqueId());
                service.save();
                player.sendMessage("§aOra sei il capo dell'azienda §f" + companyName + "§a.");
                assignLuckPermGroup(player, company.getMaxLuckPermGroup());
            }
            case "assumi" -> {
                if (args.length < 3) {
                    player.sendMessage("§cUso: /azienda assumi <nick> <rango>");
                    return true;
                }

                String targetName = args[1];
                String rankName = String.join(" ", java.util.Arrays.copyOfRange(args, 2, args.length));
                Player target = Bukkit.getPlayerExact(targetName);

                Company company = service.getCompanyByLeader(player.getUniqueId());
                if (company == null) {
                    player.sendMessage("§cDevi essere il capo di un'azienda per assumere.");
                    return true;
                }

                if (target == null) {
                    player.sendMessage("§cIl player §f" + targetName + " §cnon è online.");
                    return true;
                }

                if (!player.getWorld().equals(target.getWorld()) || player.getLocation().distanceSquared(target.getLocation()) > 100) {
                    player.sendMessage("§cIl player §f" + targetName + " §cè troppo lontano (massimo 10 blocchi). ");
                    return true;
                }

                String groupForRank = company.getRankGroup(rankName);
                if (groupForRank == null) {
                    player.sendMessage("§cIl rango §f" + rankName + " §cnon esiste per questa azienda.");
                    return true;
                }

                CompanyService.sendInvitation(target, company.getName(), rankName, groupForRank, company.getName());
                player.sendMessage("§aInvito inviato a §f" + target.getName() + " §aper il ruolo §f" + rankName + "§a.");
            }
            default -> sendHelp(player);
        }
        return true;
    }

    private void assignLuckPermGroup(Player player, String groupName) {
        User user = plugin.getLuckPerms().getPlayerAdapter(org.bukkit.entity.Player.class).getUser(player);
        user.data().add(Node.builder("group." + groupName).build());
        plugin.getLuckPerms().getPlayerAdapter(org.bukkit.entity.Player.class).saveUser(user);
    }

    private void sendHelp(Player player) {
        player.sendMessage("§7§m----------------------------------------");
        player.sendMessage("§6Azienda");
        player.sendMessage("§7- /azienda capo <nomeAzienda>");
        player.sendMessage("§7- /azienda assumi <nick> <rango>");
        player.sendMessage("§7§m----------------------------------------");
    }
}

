@@ -1,0 +1,153 @@
+package it.hyr0xx.azplugin.commands;
+
+import it.hyr0xx.azplugin.AzPlugin;
+import it.hyr0xx.azplugin.model.Company;
+import it.hyr0xx.azplugin.service.CompanyService;
+import net.luckperms.api.group.GroupManager;
+import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import java.util.Locale;
+
+public class StaffAziendeCommand implements CommandExecutor {
+
+    private final AzPlugin plugin;
+
+    public StaffAziendeCommand(AzPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("§cQuesto comando può essere usato solo da un player.");
+            return true;
+        }
+
+        if (!player.hasPermission("staffaziende")) {
+            player.sendMessage("§cNon hai il permesso per usare /staffaziende.");
+            return true;
+        }
+
+        if (args.length == 0) {
+            sendHelp(player);
+            return true;
+        }
+
+        CompanyService service = plugin.getCompanyService();
+        GroupManager groupManager = plugin.getLuckPerms().getGroupManager();
+
+        switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "crea" -> {
+                if (args.length < 3) {
+                    player.sendMessage("§cUso: /staffaziende crea <nomeAzienda> <rangoMassimo>");
+                    return true;
+                }
+
+                String companyName = args[1];
+                String maxGroup = args[2];
+
+                if (groupManager.getGroup(maxGroup) == null) {
+                    player.sendMessage("§cIl gruppo LuckPerms \"" + maxGroup + "\" non esiste.");
+                    return true;
+                }
+
+                if (service.createCompany(companyName, maxGroup)) {
+                    player.sendMessage("§aAzienda creata: §f" + companyName + " §acon gruppo massimo: §f" + maxGroup);
+                } else {
+                    player.sendMessage("§cQuesta azienda esiste già oppure il nome non è valido.");
+                }
+            }
+            case "rang" -> {
+                if (args.length < 4) {
+                    player.sendMessage("§cUso: /staffaziende crea rango <nomeAzienda> <nomeRango> <gruppoLuckPerms>");
+                    return true;
+                }
+
+                String companyName = args[2];
+                String rankName = args[3];
+                String groupName = args.length > 4 ? String.join(" ", java.util.Arrays.copyOfRange(args, 3, args.length)) : "";
+
+                if (groupName.isBlank()) {
+                    player.sendMessage("§cInserisci il gruppo LuckPerms per il rango.");
+                    return true;
+                }
+
+                if (groupManager.getGroup(groupName) == null) {
+                    player.sendMessage("§cIl gruppo LuckPerms \"" + groupName + "\" non esiste.");
+                    return true;
+                }
+
+                if (service.createSubRank(companyName, rankName, groupName)) {
+                    player.sendMessage("§aCreato sotto-rango §f" + rankName + " §aper l'azienda §f" + companyName + " §a→ gruppo: §f" + groupName);
+                } else {
+                    player.sendMessage("§cImpossibile creare il sotto-rango. Controlla il nome dell'azienda.");
+                }
+            }
+            case "crea" -> {
+                if (args.length >= 2 && args[1].equalsIgnoreCase("rango")) {
+                    if (args.length < 5) {
+                        player.sendMessage("§cUso: /staffaziende crea rango <nomeAzienda> <nomeRango> <gruppoLuckPerms>");
+                        return true;
+                    }
+
+                    String companyName = args[2];
+                    String rankName = args[3];
+                    String groupName = args.length > 4 ? String.join(" ", java.util.Arrays.copyOfRange(args, 4, args.length)) : "";
+
+                    if (groupName.isBlank()) {
+                        player.sendMessage("§cInserisci il gruppo LuckPerms del sotto-rango.");
+                        return true;
+                    }
+
+                    if (groupManager.getGroup(groupName) == null) {
+                        player.sendMessage("§cIl gruppo LuckPerms \"" + groupName + "\" non esiste.");
+                        return true;
+                    }
+
+                    if (service.createSubRank(companyName, rankName, groupName)) {
+                        player.sendMessage("§aCreato sotto-rango §f" + rankName + " §aper l'azienda §f" + companyName + " §a→ §f" + groupName);
+                    } else {
+                        player.sendMessage("§cImpossibile creare il sotto-rango. Controlla la presenza dell'azienda.");
+                    }
+                    return true;
+                }
+
+                if (args.length < 3) {
+                    player.sendMessage("§cUso: /staffaziende crea <nomeAzienda> <rangoMassimo>");
+                    return true;
+                }
+
+                String companyName = args[1];
+                String maxGroup = args[2];
+
+                if (groupManager.getGroup(maxGroup) == null) {
+                    player.sendMessage("§cIl gruppo LuckPerms \"" + maxGroup + "\" non esiste.");
+                    return true;
+                }
+
+                if (service.createCompany(companyName, maxGroup)) {
+                    player.sendMessage("§aAzienda creata: §f" + companyName + " §acon gruppo massimo: §f" + maxGroup);
+                } else {
+                    player.sendMessage("§cQuesta azienda esiste già oppure il nome non è valido.");
+                }
+            }
+            case "help", "aiuto" -> sendHelp(player);
+            default -> sendHelp(player);
+        }
+        return true;
+    }
+
+    private void sendHelp(Player player) {
+        player.sendMessage("§7§m----------------------------------------");
+        player.sendMessage("§6Staff Aziende");
+        player.sendMessage("§7- /staffaziende crea <nomeAzienda> <rangoMassimo>");
+        player.sendMessage("§7- /staffaziende crea rango <nomeAzienda> <nomeRango> <gruppoLuckPerms>");
+        player.sendMessage("§7- /azienda capo <nomeAzienda>");
+        player.sendMessage("§7- /azienda assumi <nick> <rango>");
+        player.sendMessage("§7§m----------------------------------------");
+    }
+}
